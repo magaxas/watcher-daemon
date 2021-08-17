@@ -7,7 +7,10 @@ BIN:=main
 SRC:=$(wildcard *.c)
 OBJS:=$(SRC:.c=.o)
 
-.PHONY: all clean
+.PHONY: all clean debug
+
+debug: CFLAGS += -g3
+debug: all
 
 all: $(BIN)
 

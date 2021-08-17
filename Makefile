@@ -1,10 +1,14 @@
-.PHONY: rebuild lib bin clean all install
+.PHONY: rebuild lib bin clean all install debug
 
 all: lib bin
 rebuild: clean all
+debug: clean lib debug
 
 lib:
 	$(MAKE) -C ./lib
+
+debug: 
+	$(MAKE) -C ./src debug
 
 bin:
 	$(MAKE) -C ./src

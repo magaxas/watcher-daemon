@@ -6,20 +6,31 @@ void move_file(config *conf, char *file_name, int wd)
     {
         for (int j = 0; j < conf->watchers[i].types_length; j++)
         {
-            char *ext = (char*) calloc(sizeof(char), (strlen(conf->watchers[i].file_types[j])+3) * sizeof(char));
-            ext[0] = '.';
-            strcat(ext, conf->watchers[i].file_types[j]);
-
-            if (strcmp(getExt(file_name), ext) == 0)
+            char *ext = get_ext(file_name);
+            if (strcmp(ext, conf->watchers[i].file_types[j]) == 0)
             {
-                char *dtw = (char*) calloc(sizeof(char), (strlen(file_name)+strlen(conf->dirs_to_watch[wd])+1) * sizeof(char));
-                char *old_path = strcat(dtw, file_name);
-                char *new_path = conf->watchers[i].dir_to_move;
+                char *old_path = (char *)calloc(
+                    sizeof(char), (strlen(file_name) + strlen(conf->dirs_to_watch[wd - 1]) + 1) * sizeof(char));
+                strcat(old_path, conf->dirs_to_watch[wd - 1]);
+                strcat(old_path, file_name);
+
+                char *new_path = (char *)calloc(
+                    sizeof(char), (strlen(file_name) + strlen(conf->watchers[i].dir_to_move) + 1) * sizeof(char));
+                strcat(new_path, conf->watchers[i].dir_to_move);
+                strcat(new_path, file_name);
 
                 //Move file to specified directory
-                rename(old_path, new_path);
-                printf("matched\n");
-                FREE(dtw);
+                if (rename(old_path, new_path) == -1)
+                {
+                    logger(WARNING, strerror(errno));
+                }
+                else
+                {
+                    logger(INFO, "Succesfully moved file.");
+                }
+
+                FREE(old_path);
+                FREE(new_path);
             }
             FREE(ext);
         }
@@ -28,6 +39,8 @@ void move_file(config *conf, char *file_name, int wd)
 
 int main(int argc, char **argv)
 {
+    //TODO create dirs if non existent
+    open_log("/home/magax/Desktop/logger.log");
     config *conf = init_config("../config.json");
     init_notify(conf);
 
@@ -38,5 +51,6 @@ int main(int argc, char **argv)
 
     free_notify(conf);
     free_config(conf);
+    close_log();
     return 0;
 }

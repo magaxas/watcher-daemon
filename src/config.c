@@ -8,7 +8,8 @@ char *readFile(char *file_name)
     FILE *fp = fopen(file_name, "r");
     if (!fp)
     {
-        perror(file_name);
+        logger(ERROR, "Cannot find config file!");
+        close_log();
         exit(1);
     }
 
@@ -19,14 +20,16 @@ char *readFile(char *file_name)
     if (!buffer)
     {
         fclose(fp);
-        printf("memory alloc fails\n");
+        logger(ERROR, "Memory allocation failed when reading file!");
+        close_log();
         exit(1);
     }
     else if (fread(buffer, lSize, 1, fp) != 1)
     {
         fclose(fp);
         FREE(buffer);
-        printf("Error! trying to open the file\n");
+        logger(ERROR, "Cannot open config file!");
+        close_log();
         exit(1);
     }
 
@@ -54,7 +57,7 @@ void init_dirs_to_watch(config *cnf, cJSON *json)
         }
         else
         {
-            printf("Warning: wrong value in \"dirs_to_watch\"");
+            logger(WARNING, "Warning: wrong value in \"dirs_to_watch\"");
         }
         i++;
     }
@@ -80,12 +83,10 @@ void init_watchers(config *cnf, cJSON *json)
         const cJSON *file_types = NULL;
         file_types = cJSON_GetObjectItemCaseSensitive(w, "file_types");
 
-        if (!cJSON_IsString(name) || !cJSON_IsString(dir_to_move) || !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
+        if ( !cJSON_IsString(name) || !cJSON_IsString(dir_to_move) || !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
         {
-            //initialize conf with nulls
-            //reallocate if watcher is disabled
-            //error handling like this & move to function handle_error(char *msg)
-            perror("Wrong config configuration! Exiting...");
+            logger(ERROR, "Invalid config! Loading default configuration...");
+            //TODO: load default
             cJSON_Delete(json);
             free_config(cnf);
             exit(1);
@@ -117,7 +118,7 @@ void init_watchers(config *cnf, cJSON *json)
             }
             else
             {
-                printf("Warning: wrong value in \"file_types\"");
+                logger(WARNING, "Wrong value in: \"file_types\"...");
             }
 
             j++;
@@ -131,15 +132,20 @@ config *init_config(char *conf_name)
 {
     char *conf_string = readFile(conf_name);
     cJSON *json = cJSON_Parse(conf_string);
+
     if (json == NULL)
     {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL)
-        {
-            fprintf(stderr, "Error before: %s\n", error_ptr);
-        }
+        logger(ERROR, "Error occured parsing config!");
+        // const char *error_ptr = cJSON_GetErrorPtr();
+        // if (error_ptr != NULL)
+        // {
+        //     char *err = NULL;
+        //     sprintf(err, "Error before: %s\n", error_ptr);
+        //     logger(ERROR, err);
+        // }
         cJSON_Delete(json);
         FREE(conf_string);
+        close_log();
         exit(1);
     }
 

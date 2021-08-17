@@ -15,10 +15,17 @@ void free_multiple(int argc, ...)
     va_end(ap);
 }
 
-char *getExt(const char *file_name)
+char *get_ext(char *file_name)
 {
     char *e = strrchr(file_name, '.');
     if (e == NULL)
         e = "";
-    return e;
+
+    char *f = (char *)malloc(strlen(e) * sizeof(char) + 1);
+    strcpy(f, e);
+
+    //Remove first character
+    if (e != NULL)
+        memmove(&f[0], &f[1], strlen(f));
+    return f;
 }

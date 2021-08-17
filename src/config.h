@@ -20,6 +20,6 @@ typedef struct config
     int fd, *wd;
 } config;
 
-extern config *init_config();
-extern void free_config(config *conf);
-extern void print_config(config *conf);
+config *init_config();
+void free_config(config *conf);
+void print_config(config *conf);

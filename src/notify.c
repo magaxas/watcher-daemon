@@ -5,8 +5,9 @@ void init_notify(config *conf)
     int fd = inotify_init();
     if (fd == -1)
     {
-        //TODO: clean up
-        perror("Couldn't initialize inotify");
+        logger(ERROR, "Failed to initialize inotify!");
+        free_config(conf);
+        free_notify(conf);
         exit(1);
     }
 
@@ -17,13 +18,14 @@ void init_notify(config *conf)
         int wd = inotify_add_watch(fd, conf->dirs_to_watch[i], IN_CREATE);
         if (wd == -1)
         {
-            //TODO: clean up
-            printf("Couldn't add watch to %s\n", conf->dirs_to_watch[i]);
+            logger(ERROR, "Failed to add watch!");
+            free_config(conf);
+            free_notify(conf);
             exit(1);
         }
         else
         {
-            printf("Watching:: %s\n", conf->dirs_to_watch[i]);
+            logger(INFO, "Added dir to watch list...");
         }
 
         conf->wd[i] = wd; //log
@@ -34,8 +36,6 @@ void get_event(config *conf, void (*callback)())
 {
     char buffer[BUF_LEN];
     int length, i = 0;
-
-    printf("FD: %d\n", conf->fd);
 
     length = read(conf->fd, buffer, BUF_LEN);
     if (length < 0)
@@ -51,8 +51,7 @@ void get_event(config *conf, void (*callback)())
         {
             if (event->mask & IN_CREATE && !(event->mask & IN_ISDIR))
             {
-                printf("The file %s was Created with WD %d\n", event->name, event->wd);
-                (*callback)(conf, &event->name, event->wd); //TODO: add params
+                (*callback)(conf, &event->name, event->wd);
             }
             i += EVENT_SIZE + event->len;
         }
@@ -65,7 +64,8 @@ void free_notify(config *conf)
     {
         if (inotify_rm_watch(conf->fd, conf->wd[i]) == -1)
         {
-            printf("Could not close watcher %d.\n", conf->wd[i]);
+            logger(ERROR, "Could not close watcher!");
+            close_log();
             exit(1);
         }
     }

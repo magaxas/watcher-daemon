@@ -17,6 +17,7 @@
 #include "../lib/cJSON.h"
 
 //Source
+#include "logger.h"
 #include "utils.h"
 #include "config.h"
 #include "notify.h"
