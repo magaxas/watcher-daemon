@@ -1,0 +1,29 @@
+{
+    "dirs_to_watch": ["/home/magax/Desktop/", "/home/magax/Downloads/"],
+    "watchers": [
+        {
+            "name": "audio",
+            "file_types": ["mp3", "flac", "wav"],
+            "dir_to_move": "/home/magax/Music/",
+            "enabled": true
+        },
+        {
+            "name": "video",
+            "file_types": ["mkv", "avi", "mp4"],
+            "dir_to_move": "/home/magax/Pictures/",
+            "enabled": true
+        },
+        {
+            "name": "photo",
+            "file_types": ["svg", "jpeg", "png"],
+            "dir_to_move": "/home/magax/Videos/",
+            "enabled": true
+        },
+        {
+            "name": "document",
+            "file_types": ["docx", "txt", "pdf"],
+            "dir_to_move": "/home/magax/Documents/",
+            "enabled": false
+        }
+    ]
+}
