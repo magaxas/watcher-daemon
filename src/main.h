@@ -15,9 +15,11 @@
 #include <stdarg.h>
 #include <pwd.h>
 #include <limits.h>
+#include <getopt.h>
+#include <fcntl.h>
 
 //Library
-#include "../lib/cJSON.h"
+#include <cJSON.h>
 
 //Source
 #include "logger.h"

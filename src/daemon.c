@@ -1,6 +1,6 @@
 #include "main.h"
 
-void daemonize()
+void daemonize(char *pid_file)
 {
 	pid_t pid = 0;
 	pid_t sid = 0;
@@ -40,4 +40,23 @@ void daemonize()
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
+
+	//Write PID to file
+	if (pid_file != NULL)
+	{
+		unlink(pid_file);
+		char str[256] = "";
+		int pid_fd = open(pid_file, O_RDWR | O_CREAT, 0640);
+
+		if (pid_fd < 0)
+		{
+			exit(1);
+		}
+		else if (lockf(pid_fd, F_TLOCK, 0) < 0)
+		{
+			exit(1);
+		}
+		sprintf(str, "%d\n", getpid());
+		write(pid_fd, str, strlen(str));
+	}
 }

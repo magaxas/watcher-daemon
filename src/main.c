@@ -64,30 +64,73 @@ void handle_signal(int sig, siginfo_t *siginfo, void *context)
     running = 0;
 }
 
+void print_help(void)
+{
+    printf("Options for watcher-daemon:\n");
+    printf("  -h --help                 Print help menu\n");
+    printf("  -c --conf_file filepath   Read config file\n");
+    printf("  -l --log_path  dirpath    Write in this directory\n");
+}
+
 int main(int argc, char **argv)
 {
-    //Start daemon
-    daemonize();
+    static struct option long_options[] = {
+        {"conf_file", required_argument, 0, 'c'},
+        {"log_path", required_argument, 0, 'l'},
+        {"pid_file", required_argument, 0, 'p'},
+        {"help", no_argument, 0, 'h'},
+        {NULL, 0, 0, 0}};
+
+    char *log_path = NULL, *config_path = NULL, *pid_file = NULL;
+    int val, option_index = 0;
+
+    while ((val = getopt_long(argc, argv, "c:l:p:h", long_options, &option_index)) != -1)
+    {
+        switch (val)
+        {
+        case 'c':
+            config_path = strdup(optarg);
+            break;
+        case 'l':
+            log_path = strdup(optarg);
+            break;
+        case 'p':
+            pid_file = strdup(optarg);
+            break;
+        case 'h':
+            print_help();
+            return EXIT_SUCCESS;
+        case '?':
+            print_help();
+            return EXIT_FAILURE;
+        default:
+            break;
+        }
+    }
+
+    //Start if not normal mode
+    daemonize(pid_file);
 
     //Start logger
-    open_log("/home/magax/Desktop/watcher-daemon/", "logger.log");
+    open_log(log_path, "logger.log");
     logger(INFO, "Started program...");
     logger(INFO, "Current process ID=%d", (int)getpid());
 
     //Initialize config and inotify
-    config *conf = init_config("/home/magax/projects/watcher-daemon/config4.json");
+    config *conf = init_config(config_path);
     init_notify(conf);
 
     //Handle signals
-	struct sigaction act;
-	memset (&act, '\0', sizeof(act));
- 	act.sa_sigaction = &handle_signal;
- 	act.sa_flags = SA_SIGINFO;
-    
-	if (sigaction(SIGINT, &act, NULL) < 0 || sigaction(SIGTERM, &act, NULL) < 0) {
-		logger(ERROR, "Failed to register sigaction!");
+    struct sigaction act;
+    memset(&act, '\0', sizeof(act));
+    act.sa_sigaction = &handle_signal;
+    act.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGINT, &act, NULL) < 0 || sigaction(SIGTERM, &act, NULL) < 0)
+    {
+        logger(ERROR, "Failed to register sigaction!");
         goto end;
-	}
+    }
 
     //Main loop
     while (running)
@@ -98,9 +141,10 @@ int main(int argc, char **argv)
 end:
     free_notify(conf);
     free_config(conf);
-    
+
     logger(INFO, "Exiting program...");
     close_log();
+    MFREE(3, log_path, config_path, pid_file);
 
     return 0;
 }

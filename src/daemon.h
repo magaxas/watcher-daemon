@@ -1,3 +1,3 @@
 #pragma once
 
-void daemonize();
+void daemonize(char *pid_file);

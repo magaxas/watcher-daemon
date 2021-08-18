@@ -2,11 +2,12 @@
 Description=Daemon program to watch and move files in directories
 
 [Service]
-Type=simple
+Type=forking
+PIDFile=/var/run/watcher-daemon.pid
 ExecStart=/usr/bin/watcher-daemon \
-	--conf_file /etc/watcher-daemon/config.json \
-	--log_file /var/log/watcher-daemon.log
-User=root
+	--conf_file /etc/watcher-daemon-config.json \
+	--log_path /var/log/watcher-daemon/ \
+	--pid_file /var/run/watcher-daemon.pid
 
 [Install]
 WantedBy=multi-user.target
