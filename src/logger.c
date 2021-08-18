@@ -6,6 +6,10 @@ int open_log(char *dir, char *file)
 {
     int rc = 0;
     char *path = (char *)calloc(1, strlen(dir) + strlen(file) + 1);
+    if (path == NULL)
+    {
+        exit(1);
+    }
     recursive_mkdir(dir);
     strcat(path, dir);
     strcat(path, file);

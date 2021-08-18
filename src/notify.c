@@ -6,13 +6,23 @@ void init_notify(config *conf)
     if (fd == -1)
     {
         logger(ERROR, "Failed to initialize inotify!");
-        free_config(conf);
         free_notify(conf);
+        free_config(conf);
+        close_log();
         exit(1);
     }
 
     conf->fd = fd;
     conf->wd = (int *)malloc(conf->dirs_lenght * sizeof(int));
+    if (conf->wd == NULL)
+    {
+        logger(ERROR, "Error occured while allocating \"wd\"");
+        free_notify(conf);
+        free_config(conf);
+        close_log();
+        exit(1);
+    }
+
     for (int i = 0; i < conf->dirs_lenght; i++)
     {
         int wd = inotify_add_watch(fd, conf->dirs_to_watch[i], IN_CREATE);

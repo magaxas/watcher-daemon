@@ -10,12 +10,28 @@ void move_file(config *conf, char *file_name, int wd)
             if (strcmp(ext, conf->watchers[i].file_types[j]) == 0)
             {
                 char *old_path = (char *)calloc(
-                    sizeof(char), (strlen(file_name) + strlen(conf->dirs_to_watch[wd - 1]) + 1) * sizeof(char));
+                    (strlen(file_name) + strlen(conf->dirs_to_watch[wd - 1]) + 1) * sizeof(char), 1);
+                if (old_path == NULL)
+                {
+                    logger(ERROR, "Error occured while allocating \"old_path\"");
+                    free_notify(conf);
+                    free_config(conf);
+                    close_log();
+                    exit(1);
+                }
                 strcat(old_path, conf->dirs_to_watch[wd - 1]);
                 strcat(old_path, file_name);
 
                 char *new_path = (char *)calloc(
-                    sizeof(char), (strlen(file_name) + strlen(conf->watchers[i].dir_to_move) + 1) * sizeof(char));
+                    (strlen(file_name) + strlen(conf->watchers[i].dir_to_move) + 1) * sizeof(char), 1);
+                if (new_path == NULL)
+                {
+                    logger(ERROR, "Error occured while allocating \"new_path\"");
+                    free_notify(conf);
+                    free_config(conf);
+                    close_log();
+                    exit(1);
+                }
                 strcat(new_path, conf->watchers[i].dir_to_move);
                 strcat(new_path, file_name);
 
