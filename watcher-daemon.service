@@ -1,0 +1,12 @@
+[Unit]
+Description=Daemon program to watch and move files in directories
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/watcher-daemon \
+	--conf_file /etc/watcher-daemon/config.json \
+	--log_file /var/log/watcher-daemon.log
+User=root
+
+[Install]
+WantedBy=multi-user.target

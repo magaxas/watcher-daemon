@@ -1,5 +1,7 @@
 #include "main.h"
 
+static int running = 1;
+
 void move_file(config *conf, char *file_name, int wd)
 {
     for (int i = 0; i < conf->watchers_length; i++)
@@ -56,22 +58,49 @@ void move_file(config *conf, char *file_name, int wd)
     }
 }
 
+void handle_signal(int sig, siginfo_t *siginfo, void *context)
+{
+    logger(INFO, "Stopping daemon...");
+    running = 0;
+}
+
 int main(int argc, char **argv)
 {
+    //Start daemon
+    daemonize();
+
+    //Start logger
     open_log("/home/magax/Desktop/watcher-daemon/", "logger.log");
     logger(INFO, "Started program...");
+    logger(INFO, "Current process ID=%d", (int)getpid());
 
-    config *conf = init_config("../config.json");
+    //Initialize config and inotify
+    config *conf = init_config("/home/magax/projects/watcher-daemon/config4.json");
     init_notify(conf);
 
-    while (1)
+    //Handle signals
+	struct sigaction act;
+	memset (&act, '\0', sizeof(act));
+ 	act.sa_sigaction = &handle_signal;
+ 	act.sa_flags = SA_SIGINFO;
+    
+	if (sigaction(SIGINT, &act, NULL) < 0 || sigaction(SIGTERM, &act, NULL) < 0) {
+		logger(ERROR, "Failed to register sigaction!");
+        goto end;
+	}
+
+    //Main loop
+    while (running)
     {
         get_event(conf, &move_file);
-        sleep(1);
     }
 
+end:
     free_notify(conf);
     free_config(conf);
+    
+    logger(INFO, "Exiting program...");
     close_log();
+
     return 0;
 }

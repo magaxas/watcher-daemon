@@ -42,8 +42,6 @@ char *create_default_config(void)
         strcat(path, dirs[index]);
         recursive_mkdir(path);
 
-        cJSON *w = cJSON_CreateObject();
-
         if (index == 0)
         {
             dirs_to_watch = cJSON_AddArrayToObject(json, "dirs_to_watch");
@@ -58,6 +56,8 @@ char *create_default_config(void)
         }
         else
         {
+            cJSON *w = cJSON_CreateObject();
+
             if (cJSON_AddStringToObject(w, "name", names[index - 1]) == NULL)
             {
                 goto end;

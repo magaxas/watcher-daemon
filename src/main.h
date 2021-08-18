@@ -24,3 +24,4 @@
 #include "utils.h"
 #include "config.h"
 #include "notify.h"
+#include "daemon.h"

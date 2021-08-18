@@ -51,7 +51,7 @@ void get_event(config *conf, void (*callback)())
     length = read(conf->fd, buffer, BUF_LEN);
     if (length < 0)
     {
-        logger(ERROR, "Error while reading event!");
+        logger(INFO, "Empty event.");
         return;
     }
 
