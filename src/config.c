@@ -1,6 +1,106 @@
 #include "main.h"
 
-char *readFile(char *file_name)
+char *create_default_config(void)
+{
+    cJSON *watchers = NULL;
+    cJSON *dirs_to_watch = NULL;
+    cJSON *json = cJSON_CreateObject();
+    size_t index = 0;
+
+    char *home_dir = get_home_dir();
+    strcat(home_dir, "/");
+
+    const char *names[] = {
+        "audio",
+        "video",
+        "photo",
+        "document"};
+
+    const char *types[4][3] = {
+        {"mp3", "flac", "wav"},
+        {"mkv", "avi", "mp4"},
+        {"svg", "jpeg", "png"},
+        {"docx", "txt", "pdf"}};
+
+    const char *dirs[] = {
+        "Downloads/",
+        "Music/",
+        "Pictures/",
+        "Videos/",
+        "Documents/"};
+
+    watchers = cJSON_AddArrayToObject(json, "watchers");
+    if (watchers == NULL)
+    {
+        goto end;
+    }
+
+    for (index = 0; index < 5; index++)
+    {
+        char path[PATH_MAX] = "";
+        strcat(path, home_dir);
+        strcat(path, dirs[index]);
+        recursive_mkdir(path);
+
+        cJSON *w = cJSON_CreateObject();
+
+        if (index == 0)
+        {
+            dirs_to_watch = cJSON_AddArrayToObject(json, "dirs_to_watch");
+            if (dirs_to_watch == NULL)
+            {
+                goto end;
+            }
+            else
+            {
+                cJSON_AddItemToArray(dirs_to_watch, cJSON_CreateString(path));
+            }
+        }
+        else
+        {
+            if (cJSON_AddStringToObject(w, "name", names[index - 1]) == NULL)
+            {
+                goto end;
+            }
+            if (cJSON_AddStringToObject(w, "dir_to_move", path) == NULL)
+            {
+                goto end;
+            }
+            if (cJSON_AddBoolToObject(w, "enabled", true) == NULL)
+            {
+                goto end;
+            }
+            cJSON *file_types = NULL;
+            file_types = cJSON_AddArrayToObject(w, "file_types");
+            if (file_types == NULL)
+            {
+                goto end;
+            }
+            else
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    cJSON_AddItemToArray(file_types, cJSON_CreateString(types[index - 1][i]));
+                }
+            }
+
+            cJSON_AddItemToArray(watchers, w);
+        }
+    }
+
+    char *string = NULL;
+    string = cJSON_Print(json);
+    if (string == NULL)
+    {
+        printf("Failed to print monitor\n");
+    }
+
+end:
+    cJSON_Delete(json);
+    return string;
+}
+
+char *read_file(char *file_name)
 {
     long lSize;
     char *buffer = NULL;
@@ -8,9 +108,8 @@ char *readFile(char *file_name)
     FILE *fp = fopen(file_name, "r");
     if (!fp)
     {
-        logger(ERROR, "Cannot find config file!");
-        close_log();
-        exit(1);
+        logger(WARNING, "Cannot find config file: %s", file_name);
+        goto end;
     }
 
     fseek(fp, 0L, SEEK_END);
@@ -19,21 +118,15 @@ char *readFile(char *file_name)
     buffer = calloc(1, lSize + 1);
     if (!buffer)
     {
-        fclose(fp);
-        logger(ERROR, "Memory allocation failed when reading file!");
-        close_log();
-        exit(1);
+        logger(ERROR, "Memory allocation failed while reading file: %s", file_name);
     }
     else if (fread(buffer, lSize, 1, fp) != 1)
     {
-        fclose(fp);
-        FREE(buffer);
-        logger(ERROR, "Cannot open config file!");
-        close_log();
-        exit(1);
+        logger(ERROR, "Cannot open config file: %s", file_name);
     }
 
     fclose(fp);
+end:
     return buffer;
 }
 
@@ -54,6 +147,7 @@ void init_dirs_to_watch(config *cnf, cJSON *json)
             cnf->dirs_to_watch[i] = (char *)malloc(
                 (strlen(dir_to_watch->valuestring) + 1) * sizeof(char));
             strcpy(cnf->dirs_to_watch[i], dir_to_watch->valuestring);
+            recursive_mkdir(dir_to_watch->valuestring);
         }
         else
         {
@@ -83,10 +177,9 @@ void init_watchers(config *cnf, cJSON *json)
         const cJSON *file_types = NULL;
         file_types = cJSON_GetObjectItemCaseSensitive(w, "file_types");
 
-        if ( !cJSON_IsString(name) || !cJSON_IsString(dir_to_move) || !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
+        if (!cJSON_IsString(name) || !cJSON_IsString(dir_to_move) || !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
         {
-            logger(ERROR, "Invalid config! Loading default configuration...");
-            //TODO: load default
+            logger(ERROR, "Invalid config!");
             cJSON_Delete(json);
             free_config(cnf);
             exit(1);
@@ -101,6 +194,7 @@ void init_watchers(config *cnf, cJSON *json)
         cnf->watchers[i].dir_to_move = (char *)malloc(
             (strlen(dir_to_move->valuestring) + 1) * sizeof(char));
         strcpy(cnf->watchers[i].dir_to_move, dir_to_move->valuestring);
+        recursive_mkdir(dir_to_move->valuestring);
 
         //Init watcher file_types and types_length
         cnf->watchers[i].types_length = cJSON_GetArraySize(file_types);
@@ -130,23 +224,13 @@ void init_watchers(config *cnf, cJSON *json)
 
 config *init_config(char *conf_name)
 {
-    char *conf_string = readFile(conf_name);
+    char *conf_string = read_file(conf_name);
     cJSON *json = cJSON_Parse(conf_string);
 
     if (json == NULL)
     {
-        logger(ERROR, "Error occured parsing config!");
-        // const char *error_ptr = cJSON_GetErrorPtr();
-        // if (error_ptr != NULL)
-        // {
-        //     char *err = NULL;
-        //     sprintf(err, "Error before: %s\n", error_ptr);
-        //     logger(ERROR, err);
-        // }
-        cJSON_Delete(json);
-        FREE(conf_string);
-        close_log();
-        exit(1);
+        logger(WARNING, "Using default configuration...");
+        json = cJSON_Parse(create_default_config());
     }
 
     config *cnf = (config *)malloc(sizeof(config));
@@ -180,28 +264,4 @@ void free_config(config *conf)
     }
 
     MFREE(4, conf->dirs_to_watch, conf->watchers, conf->wd, conf);
-}
-
-void print_config(config *conf)
-{
-    printf("Directories to watch:\n");
-    for (int i = 0; i < conf->dirs_lenght; i++)
-    {
-        printf("%s\n", conf->dirs_to_watch[i]);
-    }
-
-    printf("Watchers:\n");
-    for (int i = 0; i < conf->watchers_length; i++)
-    {
-        printf("Name: %s\n", conf->watchers[i].name);
-        printf("Dir to move: %s\n", conf->watchers[i].dir_to_move);
-        printf("Enabled: %s\n", conf->watchers[i].enabled ? "true" : "false");
-
-        printf("File types: ");
-        for (int j = 0; j < conf->watchers[i].types_length; j++)
-        {
-            printf("%s ", conf->watchers[i].file_types[j]);
-        }
-        printf("\n-----------------------\n");
-    }
 }

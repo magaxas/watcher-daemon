@@ -22,11 +22,14 @@ void move_file(config *conf, char *file_name, int wd)
                 //Move file to specified directory
                 if (rename(old_path, new_path) == -1)
                 {
-                    logger(WARNING, strerror(errno));
+                    logger(WARNING, "Error occured while moving file: %s", strerror(errno));
                 }
                 else
                 {
-                    logger(INFO, "Succesfully moved file.");
+                    logger(
+                        INFO,
+                        "Succesfully moved file \"%s\" from directory \"%s\" to \"%s\"",
+                        file_name, conf->dirs_to_watch[wd - 1], conf->watchers[i].dir_to_move);
                 }
 
                 FREE(old_path);
@@ -39,14 +42,16 @@ void move_file(config *conf, char *file_name, int wd)
 
 int main(int argc, char **argv)
 {
-    //TODO create dirs if non existent
-    open_log("/home/magax/Desktop/logger.log");
+    open_log("/home/magax/Desktop/watcher-daemon/", "logger.log");
+    logger(INFO, "Started program...");
+
     config *conf = init_config("../config.json");
     init_notify(conf);
 
     while (1)
     {
         get_event(conf, &move_file);
+        sleep(1);
     }
 
     free_notify(conf);

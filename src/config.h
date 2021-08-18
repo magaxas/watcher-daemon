@@ -22,4 +22,3 @@ typedef struct config
 
 config *init_config();
 void free_config(config *conf);
-void print_config(config *conf);

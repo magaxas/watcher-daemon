@@ -5,3 +5,5 @@
 
 void free_multiple(int argc, ...);
 char *get_ext(char *file_name);
+void recursive_mkdir(const char *dir);
+char *get_home_dir();

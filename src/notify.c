@@ -18,17 +18,18 @@ void init_notify(config *conf)
         int wd = inotify_add_watch(fd, conf->dirs_to_watch[i], IN_CREATE);
         if (wd == -1)
         {
-            logger(ERROR, "Failed to add watch!");
-            free_config(conf);
-            free_notify(conf);
-            exit(1);
+            logger(ERROR, "Failed to add watch with ID=%d", wd);
+            continue;
         }
         else
         {
-            logger(INFO, "Added dir to watch list...");
+            logger(
+                INFO,
+                "Added \"%s\" to watch list of watcher with ID=%d",
+                conf->dirs_to_watch[i], wd);
         }
 
-        conf->wd[i] = wd; //log
+        conf->wd[i] = wd;
     }
 }
 
@@ -40,8 +41,8 @@ void get_event(config *conf, void (*callback)())
     length = read(conf->fd, buffer, BUF_LEN);
     if (length < 0)
     {
-        perror("read");
-        exit(1);
+        logger(ERROR, "Error while reading event!");
+        return;
     }
 
     while (i < length)
@@ -64,9 +65,7 @@ void free_notify(config *conf)
     {
         if (inotify_rm_watch(conf->fd, conf->wd[i]) == -1)
         {
-            logger(ERROR, "Could not close watcher!");
-            close_log();
-            exit(1);
+            logger(ERROR, "Could not close watcher with ID=%d", conf->wd[i]);
         }
     }
 
