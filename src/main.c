@@ -67,24 +67,27 @@ void handle_signal(int sig, siginfo_t *siginfo, void *context)
 void print_help(void)
 {
     printf("Options for watcher-daemon:\n");
-    printf("  -h --help                 Print help menu\n");
-    printf("  -c --conf_file filepath   Read config file\n");
-    printf("  -l --log_path  dirpath    Write in this directory\n");
+    printf("  -h --help                  Print help menu\n");
+    printf("  -c --conf_file filepath    Read config file\n");
+    printf("  -l --log_file filepath     Write logs to this file\n");
+    printf("  -p --pid_file filepath     Write child PID (optional)\n");
+    printf("  -d --default_home dirpath  Your home directory (optional)\n");
 }
 
 int main(int argc, char **argv)
 {
     static struct option long_options[] = {
         {"conf_file", required_argument, 0, 'c'},
-        {"log_path", required_argument, 0, 'l'},
+        {"log_file", required_argument, 0, 'l'},
         {"pid_file", required_argument, 0, 'p'},
+        {"default_home", required_argument, 0, 'd'},
         {"help", no_argument, 0, 'h'},
         {NULL, 0, 0, 0}};
 
-    char *log_path = NULL, *config_path = NULL, *pid_file = NULL;
+    char *log_file = NULL, *config_path = NULL, *pid_file = NULL, *default_home = NULL;
     int val, option_index = 0;
 
-    while ((val = getopt_long(argc, argv, "c:l:p:h", long_options, &option_index)) != -1)
+    while ((val = getopt_long(argc, argv, "c:l:p:d:h", long_options, &option_index)) != -1)
     {
         switch (val)
         {
@@ -92,10 +95,13 @@ int main(int argc, char **argv)
             config_path = strdup(optarg);
             break;
         case 'l':
-            log_path = strdup(optarg);
+            log_file = strdup(optarg);
             break;
         case 'p':
             pid_file = strdup(optarg);
+            break;
+        case 'd':
+            default_home = strdup(optarg);
             break;
         case 'h':
             print_help();
@@ -108,16 +114,21 @@ int main(int argc, char **argv)
         }
     }
 
+    if (log_file == NULL || config_path == NULL) {
+        perror("Missing mandatory parameters");
+        exit(1);
+    }
+
     //Start if not normal mode
     daemonize(pid_file);
 
     //Start logger
-    open_log(log_path, "logger.log");
+    open_log(log_file);
     logger(INFO, "Started program...");
     logger(INFO, "Current process ID=%d", (int)getpid());
 
     //Initialize config and inotify
-    config *conf = init_config(config_path);
+    config *conf = init_config(config_path, default_home);
     init_notify(conf);
 
     //Handle signals
@@ -144,7 +155,7 @@ end:
 
     logger(INFO, "Exiting program...");
     close_log();
-    MFREE(3, log_path, config_path, pid_file);
+    MFREE(4, log_file, config_path, pid_file, default_home);
 
     return 0;
 }

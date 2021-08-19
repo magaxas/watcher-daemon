@@ -20,5 +20,5 @@ typedef struct config
     int fd, *wd;
 } config;
 
-config *init_config(char *conf_name);
+config *init_config(char *conf_name, char *default_home);
 void free_config(config *conf);

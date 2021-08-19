@@ -41,10 +41,12 @@ void daemonize(char *pid_file)
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
 
-	//Write PID to file
+	//Write PID to file if specified
 	if (pid_file != NULL)
 	{
-		unlink(pid_file);
+		if (unlink(pid_file) < 0) {
+			perror("Failed to unlink pid lockfile");
+		}
 		char str[256] = "";
 		int pid_fd = open(pid_file, O_RDWR | O_CREAT, 0640);
 

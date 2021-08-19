@@ -1,13 +1,24 @@
 #include "main.h"
 
-char *create_default_config(void)
+char *create_default_config(char *default_home)
 {
     cJSON *watchers = NULL;
     cJSON *dirs_to_watch = NULL;
     cJSON *json = cJSON_CreateObject();
     size_t index = 0;
 
-    char *home_dir = get_home_dir();
+    char *home_dir = NULL;
+    if (default_home == NULL) {
+        home_dir = get_home_dir();
+    } else {
+        home_dir = calloc(strlen(default_home)+2, 1);
+        strncat(home_dir, default_home, strlen(default_home));
+    }
+
+    if (home_dir[strlen(home_dir) - 1] == '/')
+    {
+        memmove(&home_dir[strlen(home_dir) - 1], &home_dir[strlen(home_dir)], 1);
+    }
     strcat(home_dir, "/");
 
     const char *names[] = {
@@ -38,8 +49,8 @@ char *create_default_config(void)
     for (index = 0; index < 5; index++)
     {
         char path[PATH_MAX] = "";
-        strcat(path, home_dir);
-        strcat(path, dirs[index]);
+        strncat(path, home_dir, strlen(home_dir));
+        strncat(path, dirs[index], strlen(dirs[index]));
         recursive_mkdir(path);
 
         if (index == 0)
@@ -92,10 +103,11 @@ char *create_default_config(void)
     string = cJSON_Print(json);
     if (string == NULL)
     {
-        printf("Failed to print monitor\n");
+        logger(ERROR, "Failed to print default config!");
     }
 
 end:
+    FREE(home_dir);
     cJSON_Delete(json);
     return string;
 }
@@ -279,15 +291,17 @@ void init_watchers(config *cnf, cJSON *json)
     }
 }
 
-config *init_config(char *conf_name)
+config *init_config(char *conf_name, char *default_home)
 {
+    char *def_conf = NULL;
     char *conf_string = read_file(conf_name);
     cJSON *json = cJSON_Parse(conf_string);
 
     if (json == NULL)
     {
         logger(WARNING, "Using default configuration...");
-        json = cJSON_Parse(create_default_config());
+        def_conf = create_default_config(default_home);
+        json = cJSON_Parse(def_conf);
     }
 
     config *cnf = (config *)malloc(sizeof(config));
@@ -304,6 +318,7 @@ config *init_config(char *conf_name)
 
     cJSON_Delete(json);
     FREE(conf_string);
+    FREE(def_conf);
     return cnf;
 }
 

@@ -2,22 +2,26 @@
 
 static FILE *log = NULL;
 
-int open_log(char *dir, char *file)
+int open_log(char *file)
 {
     int rc = 0;
-    char *path = (char *)calloc(1, strlen(dir) + strlen(file) + 1);
-    if (path == NULL)
+    if (file == NULL)
     {
+        FREE(file);
+        perror("No log file specified");
         exit(1);
     }
-    recursive_mkdir(dir);
-    strcat(path, dir);
-    strcat(path, file);
+    char *path = strdup(file);
+    dirname(file);
+    recursive_mkdir(file);
 
     log = fopen(path, "a");
     if (log == NULL)
     {
-        rc = 1;
+        perror("Failed to open logger file");
+        FREE(path);
+        FREE(file);
+        exit(1);
     }
     FREE(path);
     return rc;

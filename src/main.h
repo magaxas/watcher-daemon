@@ -17,9 +17,10 @@
 #include <limits.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <libgen.h>
 
 //Library
-#include <cJSON.h>
+#include "../lib/cJSON.h"
 
 //Source
 #include "logger.h"

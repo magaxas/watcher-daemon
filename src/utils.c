@@ -49,11 +49,28 @@ void recursive_mkdir(const char *dir)
         }
 
     if (mkdir(tmp, 0755) == -1 && errno != EEXIST)
+    {
         logger(ERROR, "Error while creating directory: \"%s\" | %s", dir, strerror(errno));
+        perror("Error while creating directory");
+    }
 }
 
 char *get_home_dir()
 {
-    struct passwd *pw = getpwuid(getuid());
-    return pw->pw_dir;
+    char *home = NULL;
+    char *user = getenv("SUDO_USER");
+    if (user != NULL)
+    {
+        home = (char *)calloc(PATH_MAX, 1);
+        strcat(home, "/home/");
+        strcat(home, user);
+        return home;
+    }
+    else
+    {
+        struct passwd *pw = getpwuid(getuid());
+        home = (char *)calloc(PATH_MAX, 1);
+        strcat(home, pw->pw_dir);
+        return home;
+    }
 }
