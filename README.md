@@ -6,6 +6,7 @@ Before running `make install`, make sure you have set your
 ```
 make
 make install
+sudo cp config.json /etc/watcher-daemon.json
 ```
 
 ### Debugging

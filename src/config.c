@@ -8,10 +8,13 @@ char *create_default_config(char *default_home)
     size_t index = 0;
 
     char *home_dir = NULL;
-    if (default_home == NULL) {
+    if (default_home == NULL)
+    {
         home_dir = get_home_dir();
-    } else {
-        home_dir = calloc(strlen(default_home)+2, 1);
+    }
+    else
+    {
+        home_dir = calloc(strlen(default_home) + 2, 1);
         strncat(home_dir, default_home, strlen(default_home));
     }
 
@@ -91,7 +94,10 @@ char *create_default_config(char *default_home)
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    cJSON_AddItemToArray(file_types, cJSON_CreateString(types[index - 1][i]));
+                    cJSON_AddItemToArray(
+                        file_types,
+                        cJSON_CreateString(types[index - 1][i])
+                    );
                 }
             }
 
@@ -193,7 +199,9 @@ void init_watchers(config *cnf, cJSON *json)
 
     ws = cJSON_GetObjectItemCaseSensitive(json, "watchers");
     cnf->watchers_length = cJSON_GetArraySize(ws);
-    cnf->watchers = (watcher *)calloc(cnf->watchers_length * sizeof(watcher), sizeof(watcher));
+    cnf->watchers = (watcher *)calloc(
+        cnf->watchers_length * sizeof(watcher), sizeof(watcher)
+    );
     if (cnf->watchers == NULL)
     {
         logger(ERROR, "Error occured while allocating \"watchers\"");
@@ -214,7 +222,8 @@ void init_watchers(config *cnf, cJSON *json)
         const cJSON *file_types = NULL;
         file_types = cJSON_GetObjectItemCaseSensitive(w, "file_types");
 
-        if (!cJSON_IsString(name) || !cJSON_IsString(dir_to_move) || !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
+        if (!cJSON_IsString(name) || !cJSON_IsString(dir_to_move) ||
+            !cJSON_IsBool(enabled) || !cJSON_IsArray(file_types))
         {
             logger(ERROR, "Invalid config!");
             free_notify(cnf);
@@ -223,71 +232,79 @@ void init_watchers(config *cnf, cJSON *json)
             exit(1);
         }
 
-        //Init watcher name
-        cnf->watchers[i].name = (char *)malloc(
-            (strlen(name->valuestring) + 1) * sizeof(char));
-        if (cnf->watchers[i].name == NULL)
+        if (cJSON_IsTrue(enabled))
         {
-            logger(ERROR, "Error occured while allocating \"watchers[i].name\"");
-            free_notify(cnf);
-            free_config(cnf);
-            close_log();
-            exit(1);
-        }
-        strcpy(cnf->watchers[i].name, name->valuestring);
-
-        //Init watcher dir_to_move
-        cnf->watchers[i].dir_to_move = (char *)malloc(
-            (strlen(dir_to_move->valuestring) + 1) * sizeof(char));
-        if (cnf->watchers[i].dir_to_move == NULL)
-        {
-            logger(ERROR, "Error occured while allocating \"watchers[i].dir_to_move\"");
-            free_notify(cnf);
-            free_config(cnf);
-            close_log();
-            exit(1);
-        }
-        strcpy(cnf->watchers[i].dir_to_move, dir_to_move->valuestring);
-        recursive_mkdir(dir_to_move->valuestring);
-
-        //Init watcher file_types and types_length
-        cnf->watchers[i].types_length = cJSON_GetArraySize(file_types);
-        cnf->watchers[i].file_types = (char **)malloc(
-            cnf->watchers[i].types_length * sizeof(char *));
-        if (cnf->watchers[i].file_types == NULL)
-        {
-            logger(ERROR, "Error occured while allocating \"watchers[i].file_types\"");
-            free_notify(cnf);
-            free_config(cnf);
-            close_log();
-            exit(1);
-        }
-        int j = 0;
-        cJSON_ArrayForEach(file_type, file_types)
-        {
-            if (cJSON_IsString(file_type))
+            // Init watcher name
+            cnf->watchers[i].name =
+                (char *)malloc((strlen(name->valuestring) + 1) * sizeof(char));
+            if (cnf->watchers[i].name == NULL)
             {
-                cnf->watchers[i].file_types[j] = (char *)malloc(
-                    (strlen(file_type->valuestring) + 1) * sizeof(char));
-                if (cnf->watchers[i].file_types[j] == NULL)
+                logger(ERROR, "Error occured while allocating \"watchers[i].name\"");
+                free_notify(cnf);
+                free_config(cnf);
+                close_log();
+                exit(1);
+            }
+            strcpy(cnf->watchers[i].name, name->valuestring);
+
+            // Init watcher dir_to_move
+            cnf->watchers[i].dir_to_move =
+                (char *)malloc((strlen(dir_to_move->valuestring) + 1) * sizeof(char));
+            if (cnf->watchers[i].dir_to_move == NULL)
+            {
+                logger(ERROR,
+                       "Error occured while allocating \"watchers[i].dir_to_move\"");
+                free_notify(cnf);
+                free_config(cnf);
+                close_log();
+                exit(1);
+            }
+            strcpy(cnf->watchers[i].dir_to_move, dir_to_move->valuestring);
+            recursive_mkdir(dir_to_move->valuestring);
+
+            // Init watcher file_types and types_length
+            cnf->watchers[i].types_length = cJSON_GetArraySize(file_types);
+            cnf->watchers[i].file_types =
+                (char **)malloc(cnf->watchers[i].types_length * sizeof(char *));
+
+            if (cnf->watchers[i].file_types == NULL)
+            {
+                logger(ERROR,
+                       "Error occured while allocating \"watchers[i].file_types\"");
+                free_notify(cnf);
+                free_config(cnf);
+                close_log();
+                exit(1);
+            }
+            int j = 0;
+            cJSON_ArrayForEach(file_type, file_types)
+            {
+                if (cJSON_IsString(file_type))
                 {
-                    logger(ERROR, "Error occured while allocating \"watchers[i].file_types[j]\"");
-                    free_notify(cnf);
-                    free_config(cnf);
-                    close_log();
-                    exit(1);
+                    cnf->watchers[i].file_types[j] = (char *)malloc(
+                        (strlen(file_type->valuestring) + 1) * sizeof(char));
+                    if (cnf->watchers[i].file_types[j] == NULL)
+                    {
+                        logger(
+                            ERROR,
+                            "Error occured while allocating \"watchers[i].file_types[j]\"");
+                        free_notify(cnf);
+                        free_config(cnf);
+                        close_log();
+                        exit(1);
+                    }
+                    strcpy(cnf->watchers[i].file_types[j], file_type->valuestring);
                 }
-                strcpy(cnf->watchers[i].file_types[j], file_type->valuestring);
-            }
-            else
-            {
-                logger(WARNING, "Wrong value in: \"file_types\"...");
+                else
+                {
+                    logger(WARNING, "Wrong value in: \"file_types\"...");
+                }
+
+                j++;
             }
 
-            j++;
+            i++;
         }
-
-        i++;
     }
 }
 
@@ -336,9 +353,7 @@ void free_config(config *conf)
             FREE(conf->watchers[i].file_types[j]);
         }
 
-        MFREE(3,
-              conf->watchers[i].file_types,
-              conf->watchers[i].name,
+        MFREE(3, conf->watchers[i].file_types, conf->watchers[i].name,
               conf->watchers[i].dir_to_move);
     }
 

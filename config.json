@@ -23,7 +23,7 @@
             "name": "document",
             "file_types": ["docx", "txt", "pdf"],
             "dir_to_move": "/home/magax/Documents/",
-            "enabled": false
+            "enabled": true
         }
     ]
 }

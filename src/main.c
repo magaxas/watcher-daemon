@@ -12,7 +12,9 @@ void move_file(config *conf, char *file_name, int wd)
             if (strcmp(ext, conf->watchers[i].file_types[j]) == 0)
             {
                 char *old_path = (char *)calloc(
-                    (strlen(file_name) + strlen(conf->dirs_to_watch[wd - 1]) + 1) * sizeof(char), 1);
+                    (strlen(file_name) + strlen(conf->dirs_to_watch[wd - 1]) + 1) *
+                        sizeof(char),
+                    1);
                 if (old_path == NULL)
                 {
                     logger(ERROR, "Error occured while allocating \"old_path\"");
@@ -25,7 +27,9 @@ void move_file(config *conf, char *file_name, int wd)
                 strcat(old_path, file_name);
 
                 char *new_path = (char *)calloc(
-                    (strlen(file_name) + strlen(conf->watchers[i].dir_to_move) + 1) * sizeof(char), 1);
+                    (strlen(file_name) + strlen(conf->watchers[i].dir_to_move) + 1) *
+                        sizeof(char),
+                    1);
                 if (new_path == NULL)
                 {
                     logger(ERROR, "Error occured while allocating \"new_path\"");
@@ -37,17 +41,19 @@ void move_file(config *conf, char *file_name, int wd)
                 strcat(new_path, conf->watchers[i].dir_to_move);
                 strcat(new_path, file_name);
 
-                //Move file to specified directory
+                // Move file to specified directory
                 if (rename(old_path, new_path) == -1)
                 {
-                    logger(WARNING, "Error occured while moving file: %s", strerror(errno));
+                    logger(WARNING, "Error occured while moving file: %s",
+                           strerror(errno));
                 }
                 else
                 {
-                    logger(
-                        INFO,
-                        "Succesfully moved file \"%s\" from directory \"%s\" to \"%s\"",
-                        file_name, conf->dirs_to_watch[wd - 1], conf->watchers[i].dir_to_move);
+                    logger(INFO,
+                           "Watcher \"%s\" in action. Succesfully moved file \"%s\" from "
+                           "directory \"%s\" to \"%s\"",
+                           conf->watchers[i].name, file_name, conf->dirs_to_watch[wd - 1],
+                           conf->watchers[i].dir_to_move);
                 }
 
                 FREE(old_path);
@@ -114,7 +120,8 @@ int main(int argc, char **argv)
         }
     }
 
-    if (log_file == NULL || config_path == NULL) {
+    if (log_file == NULL || config_path == NULL)
+    {
         perror("Missing mandatory parameters");
         exit(1);
     }

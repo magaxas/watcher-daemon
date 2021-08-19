@@ -6,7 +6,6 @@ typedef struct watcher
     char **file_types;
     char *name;
     char *dir_to_move;
-    bool enabled;
 } watcher;
 
 typedef struct config
