@@ -4,44 +4,36 @@ static FILE *log = NULL;
 
 int open_log(char *file)
 {
-    int rc = 0;
-    if (file == NULL)
-    {
-        FREE(file);
+    if (file == NULL) {
         perror("No log file specified");
-        exit(1);
+        return 1;
     }
+
     char *path = strdup(file);
     dirname(file);
     recursive_mkdir(file);
 
     log = fopen(path, "a");
-    if (log == NULL)
-    {
+    if (log == NULL) {
         perror("Failed to open logger file");
-        FREE(path);
-        FREE(file);
-        exit(1);
+        return 1;
     }
+
     FREE(path);
-    return rc;
+    return 0;
 }
 
 int close_log()
 {
     int rc = 0;
-    if (log != NULL)
-    {
-        rc = fclose(log);
-    }
+    if (log != NULL) rc = fclose(log);
     return rc;
 }
 
 static int get_level(int level, char *msg)
 {
     int rc = 0;
-    switch (level)
-    {
+    switch (level) {
     case INFO:
         strcpy(msg, "[INFO]");
         break;
@@ -67,11 +59,11 @@ static int vasprintf(char **strp, const char *fmt, va_list ap)
     va_copy(ap2, ap);
     char tmp[1];
     int size = vsnprintf(tmp, 1, fmt, ap2);
-    if (size <= 0)
-        return size;
+    if (size <= 0) return size;
     va_end(ap2);
     size += 1;
-    *strp = (char *)malloc(size * sizeof(char));
+    *strp = (char *) malloc(size * sizeof(char));
+
     return vsnprintf(*strp, size, fmt, ap);
 }
 
@@ -79,16 +71,10 @@ void logger(int level, char *fmt, ...)
 {
     int rc;
     char msg_lvl[15];
-    if (log == NULL)
-    {
-        return;
-    }
+    if (log == NULL) return;
 
     rc = get_level(level, msg_lvl);
-    if (rc > 0)
-    {
-        return;
-    }
+    if (rc > 0) return;
 
     va_list l;
     char *msg = NULL;
